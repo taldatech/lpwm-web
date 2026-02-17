@@ -1,0 +1,1688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Latent Particle World Models</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3CradialGradient id='grad1' cx='50%25' cy='50%25' r='50%25'%3E%3Cstop offset='0%25' style='stop-color:%2360a5fa;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%23a78bfa;stop-opacity:1' /%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='25' cy='25' r='8' fill='%2360a5fa' opacity='0.9'/%3E%3Ccircle cx='75' cy='25' r='7' fill='%23a78bfa' opacity='0.9'/%3E%3Ccircle cx='50' cy='50' r='10' fill='url(%23grad1)' opacity='1'/%3E%3Ccircle cx='25' cy='75' r='6' fill='%23f472b6' opacity='0.9'/%3E%3Ccircle cx='75' cy='75' r='7' fill='%2360a5fa' opacity='0.9'/%3E%3Cline x1='25' y1='25' x2='50' y2='50' stroke='%2360a5fa' stroke-width='2' opacity='0.4'/%3E%3Cline x1='75' y1='25' x2='50' y2='50' stroke='%23a78bfa' stroke-width='2' opacity='0.4'/%3E%3Cline x1='25' y1='75' x2='50' y2='50' stroke='%23f472b6' stroke-width='2' opacity='0.4'/%3E%3Cline x1='75' y1='75' x2='50' y2='50' stroke='%2360a5fa' stroke-width='2' opacity='0.4'/%3E%3C/svg%3E">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #000;
+            color: #e0e0e0;
+            overflow-x: hidden;
+        }
+
+        #particles-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .content {
+            position: relative;
+            z-index: 1;
+        }
+
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            z-index: 100;
+            transform: translateY(-100%);
+            transition: transform 0.3s ease;
+        }
+
+        header.visible {
+            transform: translateY(0);
+        }
+
+        nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+        }
+
+        nav a {
+            color: #e0e0e0;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.3s;
+        }
+
+        nav a:hover {
+            color: #60a5fa;
+        }
+
+        /* Side Navigation */
+        .side-nav {
+            position: fixed;
+            left: 2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 90;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .side-nav.visible {
+            opacity: 1;
+        }
+
+        .side-nav-item {
+            display: block;
+            width: 8px;
+            height: 8px;
+            background: rgba(96, 165, 250, 0.3);
+            border-radius: 50%;
+            margin: 1rem 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .side-nav-item:hover,
+        .side-nav-item.active {
+            background: rgba(96, 165, 250, 0.8);
+            transform: scale(1.5);
+        }
+
+        .side-nav-item::before {
+            content: attr(data-label);
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: #60a5fa;
+            padding: 0.3rem 0.8rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .side-nav-item:hover::before {
+            opacity: 1;
+        }
+
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.3;
+        }
+
+        .subtitle {
+            font-size: 1.5rem;
+            color: #b0b0b0;
+            font-weight: 400;
+            margin-bottom: 2rem;
+            line-height: 1.5;
+        }
+
+        .venue {
+            font-size: 1.2rem;
+            color: #a78bfa;
+            font-weight: 600;
+            margin-bottom: 2rem;
+        }
+
+        .authors {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        .author {
+            color: #e0e0e0;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            position: relative;
+            display: inline-block;
+        }
+
+        .author:hover {
+            color: #60a5fa;
+        }
+
+        .author::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: #60a5fa;
+            transition: width 0.3s ease;
+        }
+
+        .author:hover::after {
+            width: 100%;
+        }
+
+        .author sup {
+            font-size: 0.7em;
+            color: #a78bfa;
+            font-weight: 600;
+            margin-left: 2px;
+        }
+
+        /* Affiliations */
+        .affiliations {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+            font-size: 0.95rem;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .affiliation {
+            color: #909090;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .affiliation sup {
+            color: #a78bfa;
+            font-weight: 700;
+            font-size: 0.85em;
+        }
+
+        /* Circular Icon Buttons */
+        .links {
+            display: flex;
+            gap: 2rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .icon-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.6rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .icon-btn-circle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: rgba(96, 165, 250, 0.1);
+            border: 2px solid #60a5fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .icon-btn-circle::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(96, 165, 250, 0.2);
+            transform: translate(-50%, -50%);
+            transition: all 0.3s ease;
+        }
+
+        .icon-btn:hover .icon-btn-circle::before {
+            width: 100%;
+            height: 100%;
+        }
+
+        .icon-btn:hover .icon-btn-circle {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 25px rgba(96, 165, 250, 0.4);
+            background: rgba(96, 165, 250, 0.15);
+        }
+
+        .icon-btn-circle svg {
+            width: 28px;
+            height: 28px;
+            fill: #60a5fa;
+            position: relative;
+            z-index: 1;
+            transition: all 0.3s ease;
+        }
+
+        .icon-btn:hover .icon-btn-circle svg {
+            transform: scale(1.1);
+        }
+
+        .icon-btn-label {
+            color: #60a5fa;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .icon-btn:hover .icon-btn-label {
+            color: #93c5fd;
+        }
+
+        /* Different colors for different button types */
+        .icon-btn.arxiv .icon-btn-circle {
+            border-color: #f472b6;
+            background: rgba(244, 114, 182, 0.1);
+        }
+
+        .icon-btn.arxiv .icon-btn-circle svg {
+            fill: #f472b6;
+        }
+
+        .icon-btn.arxiv .icon-btn-label {
+            color: #f472b6;
+        }
+
+        .icon-btn.arxiv:hover .icon-btn-circle {
+            background: rgba(244, 114, 182, 0.15);
+            box-shadow: 0 6px 25px rgba(244, 114, 182, 0.4);
+        }
+
+        .icon-btn.arxiv:hover .icon-btn-label {
+            color: #f9a8d4;
+        }
+
+        .icon-btn.github .icon-btn-circle {
+            border-color: #a78bfa;
+            background: rgba(167, 139, 250, 0.1);
+        }
+
+        .icon-btn.github .icon-btn-circle svg {
+            fill: #a78bfa;
+        }
+
+        .icon-btn.github .icon-btn-label {
+            color: #a78bfa;
+        }
+
+        .icon-btn.github:hover .icon-btn-circle {
+            background: rgba(167, 139, 250, 0.15);
+            box-shadow: 0 6px 25px rgba(167, 139, 250, 0.4);
+        }
+
+        .icon-btn.github:hover .icon-btn-label {
+            color: #c4b5fd;
+        }
+
+        .icon-btn.video .icon-btn-circle {
+            border-color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .icon-btn.video .icon-btn-circle svg {
+            fill: #ef4444;
+        }
+
+        .icon-btn.video .icon-btn-label {
+            color: #ef4444;
+        }
+
+        .icon-btn.video:hover .icon-btn-circle {
+            background: rgba(239, 68, 68, 0.15);
+            box-shadow: 0 6px 25px rgba(239, 68, 68, 0.4);
+        }
+
+        .icon-btn.video:hover .icon-btn-label {
+            color: #f87171;
+        }
+
+        section {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 6rem 2rem;
+            min-height: 60vh;
+        }
+
+        h2 {
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            color: #60a5fa;
+            text-align: center;
+        }
+
+        .abstract-text {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #b0b0b0;
+            text-align: center;
+        }
+
+        .architecture-content, .results-content {
+            display: grid;
+            gap: 2rem;
+        }
+
+        .placeholder {
+            background: rgba(96, 165, 250, 0.05);
+            border: 2px dashed rgba(96, 165, 250, 0.3);
+            border-radius: 12px;
+            padding: 3rem;
+            text-align: center;
+            color: #808080;
+        }
+
+        .dataset-section {
+            background: rgba(96, 165, 250, 0.03);
+            border: 1px solid rgba(96, 165, 250, 0.2);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            transition: all 0.3s ease;
+            scroll-margin-top: 100px;
+        }
+
+        .dataset-section:hover {
+            border-color: rgba(96, 165, 250, 0.4);
+            background: rgba(96, 165, 250, 0.05);
+        }
+
+        .dataset-header {
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .dataset-title-group {
+            flex: 1;
+        }
+
+        .dataset-title {
+            font-size: 1.8rem;
+            color: #a78bfa;
+            margin-bottom: 0.5rem;
+        }
+
+        .dataset-description {
+            color: #909090;
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        /* Video Grid Layouts */
+        .video-grid {
+            display: grid;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        /* Standard 2-column layout */
+        .video-grid.layout-2col {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        /* Asymmetric layout: 1 wide on top, 2 below */
+        .video-grid.layout-asymmetric {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .video-grid.layout-asymmetric .video-item:first-child {
+            grid-column: 1 / -1;
+        }
+
+        .video-grid.layout-asymmetric .video-item:first-child .video-placeholder {
+            aspect-ratio: 21 / 9;
+        }
+
+        .video-item {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(96, 165, 250, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .video-item:hover {
+            border-color: rgba(96, 165, 250, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(96, 165, 250, 0.2);
+        }
+
+        .video-placeholder {
+            aspect-ratio: 16 / 9;
+            background: linear-gradient(135deg, rgba(96, 165, 250, 0.1) 0%, rgba(167, 139, 250, 0.1) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #808080;
+            font-size: 1.2rem;
+        }
+
+        .video-caption {
+            padding: 1rem;
+            color: #b0b0b0;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .expandable-videos {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease;
+        }
+
+        .expandable-videos.expanded {
+            max-height: 2000px;
+        }
+
+        .expand-btn {
+            margin-top: 1.5rem;
+            width: 100%;
+            padding: 0.8rem;
+            background: rgba(96, 165, 250, 0.1);
+            border: 1px solid rgba(96, 165, 250, 0.3);
+            color: #60a5fa;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .expand-btn:hover {
+            background: rgba(96, 165, 250, 0.2);
+            border-color: rgba(96, 165, 250, 0.5);
+        }
+
+        .expand-btn .arrow {
+            transition: transform 0.3s ease;
+        }
+
+        .expand-btn.expanded .arrow {
+            transform: rotate(180deg);
+        }
+
+        /* External link button for datasets */
+        .dataset-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1.2rem;
+            background: rgba(96, 165, 250, 0.1);
+            border: 1px solid rgba(96, 165, 250, 0.3);
+            color: #60a5fa;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+        }
+
+        .dataset-link:hover {
+            background: rgba(96, 165, 250, 0.2);
+            border-color: rgba(96, 165, 250, 0.5);
+            transform: translateX(4px);
+        }
+
+        .dataset-link svg {
+            width: 16px;
+            height: 16px;
+            fill: #60a5fa;
+            transition: transform 0.3s ease;
+        }
+
+        .dataset-link:hover svg {
+            transform: translateX(2px);
+        }
+
+        /* Related Work Section */
+        .related-work-section {
+            background: rgba(167, 139, 250, 0.03);
+            border: 1px solid rgba(167, 139, 250, 0.2);
+            border-radius: 16px;
+            padding: 3rem 2rem;
+            margin-top: 4rem;
+        }
+
+        .related-work-title {
+            font-size: 2rem;
+            color: #a78bfa;
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .related-work-subtitle {
+            text-align: center;
+            color: #909090;
+            margin-bottom: 2rem;
+            font-size: 1rem;
+        }
+
+        .carousel-container {
+            position: relative;
+            overflow: hidden;
+            padding: 1rem 0;
+        }
+
+        .carousel-track {
+            display: flex;
+            gap: 1.5rem;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(167, 139, 250, 0.3) rgba(167, 139, 250, 0.05);
+            padding: 0.5rem;
+            scroll-snap-type: x mandatory;
+        }
+
+        .carousel-track::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        .carousel-track::-webkit-scrollbar-track {
+            background: rgba(167, 139, 250, 0.05);
+            border-radius: 4px;
+        }
+
+        .carousel-track::-webkit-scrollbar-thumb {
+            background: rgba(167, 139, 250, 0.3);
+            border-radius: 4px;
+        }
+
+        .carousel-track::-webkit-scrollbar-thumb:hover {
+            background: rgba(167, 139, 250, 0.5);
+        }
+
+        .work-card {
+            min-width: 280px;
+            max-width: 280px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(167, 139, 250, 0.3);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            scroll-snap-align: start;
+        }
+
+        .work-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(167, 139, 250, 0.6);
+            box-shadow: 0 8px 30px rgba(167, 139, 250, 0.3);
+        }
+
+        .work-card-image {
+            aspect-ratio: 16 / 10;
+            background: linear-gradient(135deg, rgba(167, 139, 250, 0.15) 0%, rgba(96, 165, 250, 0.15) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #808080;
+            font-size: 0.9rem;
+        }
+
+        .work-card-content {
+            padding: 1.2rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .work-card-title {
+            color: #a78bfa;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .work-card-authors {
+            color: #808080;
+            font-size: 0.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .work-card-venue {
+            color: #60a5fa;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: auto;
+        }
+
+        /* Video Modal/Lightbox */
+        .video-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .video-modal.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .video-modal-content {
+            max-width: 90vw;
+            max-height: 90vh;
+            position: relative;
+            animation: zoomIn 0.3s ease;
+        }
+
+        @keyframes zoomIn {
+            from {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .video-modal-content img {
+            max-width: 100%;
+            max-height: 90vh;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(96, 165, 250, 0.3);
+            border: 2px solid rgba(96, 165, 250, 0.3);
+        }
+
+        .video-modal-close {
+            position: absolute;
+            top: -40px;
+            right: 0;
+            background: rgba(96, 165, 250, 0.2);
+            border: 2px solid rgba(96, 165, 250, 0.4);
+            color: #60a5fa;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.5rem;
+            font-weight: 300;
+            transition: all 0.3s ease;
+        }
+
+        .video-modal-close:hover {
+            background: rgba(96, 165, 250, 0.3);
+            border-color: rgba(96, 165, 250, 0.6);
+            transform: rotate(90deg);
+        }
+
+        .video-modal-caption {
+            text-align: center;
+            color: #b0b0b0;
+            margin-top: 1rem;
+            font-size: 1rem;
+        }
+
+        .video-placeholder {
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .video-item:hover .video-placeholder {
+            transform: scale(1.02);
+        }
+
+        .video-placeholder img {
+            display: block;
+            width: 100%;
+            height: auto;
+            transition: opacity 0.3s ease;
+        }
+
+        .video-item:hover .video-placeholder img {
+            opacity: 0.9;
+        }
+
+        footer {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: #606060;
+            border-top: 1px solid rgba(96, 165, 250, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            .subtitle {
+                font-size: 1.2rem;
+            }
+
+            .video-grid.layout-2col,
+            .video-grid.layout-asymmetric {
+                grid-template-columns: 1fr;
+            }
+
+            .video-grid.layout-asymmetric .video-item:first-child {
+                grid-column: 1;
+            }
+
+            .side-nav {
+                display: none;
+            }
+
+            .work-card {
+                min-width: 240px;
+                max-width: 240px;
+            }
+
+            .icon-btn-circle {
+                width: 50px;
+                height: 50px;
+            }
+
+            .icon-btn-circle svg {
+                width: 24px;
+                height: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="particles-canvas"></canvas>
+
+    <div class="content">
+        <header id="sticky-header">
+            <nav>
+                <a href="#abstract">Abstract</a>
+                <a href="#architecture">Architecture</a>
+                <a href="#results">Results</a>
+                <a href="#related">Related Work</a>
+            </nav>
+        </header>
+
+        <!-- Side Navigation -->
+        <div class="side-nav" id="side-nav">
+            <div class="side-nav-item" data-label="Sketchy" onclick="scrollToDataset('dataset1')"></div>
+            <div class="side-nav-item" data-label="Bridge" onclick="scrollToDataset('dataset2')"></div>
+            <div class="side-nav-item" data-label="Mario" onclick="scrollToDataset('dataset3')"></div>
+            <div class="side-nav-item" data-label="LanguageTable" onclick="scrollToDataset('dataset4')"></div>
+            <div class="side-nav-item" data-label="BAIR" onclick="scrollToDataset('dataset5')"></div>
+            <div class="side-nav-item" data-label="PandaPush" onclick="scrollToDataset('dataset6')"></div>
+            <div class="side-nav-item" data-label="OGBench" onclick="scrollToDataset('dataset7')"></div>
+        </div>
+
+        <div class="hero">
+            <h1>Latent Particle World Models</h1>
+            <p class="subtitle">Self-supervised Object-centric Stochastic Dynamics Modeling</p>
+            <p class="venue">International Conference on Learning Representations (ICLR) 2026 Oral (Top 1.18%)</p>
+            
+            <div class="authors">
+                <a href="https://taldatech.github.io" class="author">Tal Daniel<sup>1</sup></a>
+                <a href="https://carl-qi.github.io" class="author">Carl Qi<sup>2</sup></a>
+                <a href="https://danhrmti.github.io" class="author">Dan Haramati<sup>3</sup></a>
+                <a href="https://lambda.ai/research" class="author">Amir Zadeh<sup>5</sup></a>
+                <a href="https://lambda.ai/research" class="author">Chuan Li<sup>5</sup></a>
+                <a href="https://avivt.github.io/avivt" class="author">Aviv Tamar<sup>4</sup></a>
+                <a href="https://www.cs.cmu.edu/~dpathak/" class="author">Deepak Pathak<sup>1</sup></a>
+                <a href="https://r-pad.github.io/" class="author">David Held<sup>1</sup></a>
+            </div>
+            
+            <div class="affiliations">
+                <div class="affiliation"><sup>1</sup>Carnegie Mellon University</div>
+				<div class="affiliation"><sup>2</sup>UT Austin</div>
+                <div class="affiliation"><sup>3</sup>Brown University</div>
+                <div class="affiliation"><sup>4</sup>Technion</div>
+                <div class="affiliation"><sup>5</sup>Lambda</div>
+            </div>
+            
+            <div class="links">
+                <a href="https://openreview.net/forum?id=lTaPtGiUUc" class="icon-btn">
+                    <div class="icon-btn-circle">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/>
+                            <path d="M14 2v6h6"/>
+                            <path d="M16 13H8"/>
+                            <path d="M16 17H8"/>
+                            <path d="M10 9H8"/>
+                        </svg>
+                    </div>
+                    <span class="icon-btn-label">OpenReview</span>
+                </a>
+                
+                <a href="#" class="icon-btn arxiv">
+                    <div class="icon-btn-circle">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9 2v2H7c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-2V2H9zm0 4h6v2H9V6zm0 4h6v2H9v-2zm0 4h4v2H9v-2z"/>
+                            <path d="M7 22h10v2H7z"/>
+                        </svg>
+                    </div>
+                    <span class="icon-btn-label">arXiv</span>
+                </a>
+                
+                <a href="https://github.com/taldatech/lpwm" class="icon-btn github">
+                    <div class="icon-btn-circle">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.17 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.167 22 16.418 22 12c0-5.523-4.477-10-10-10z"/>
+                        </svg>
+                    </div>
+                    <span class="icon-btn-label">Code</span>
+                </a>
+                
+                <a href="#" class="icon-btn video">
+                    <div class="icon-btn-circle">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M8 5v14l11-7z"/>
+                        </svg>
+                    </div>
+                    <span class="icon-btn-label">Video</span>
+                </a>
+            </div>
+        </div>
+
+        <section id="abstract">
+            <h2>Abstract</h2>
+            <p class="abstract-text">
+				We introduce Latent Particle World Model (LPWM), a self-supervised object-centric world model scaled to real-world multi-object datasets and applicable in decision-making.
+				LPWM autonomously discovers keypoints, bounding boxes, and object masks directly from video data,
+				enabling it to learn rich scene decompositions without supervision.
+				Our architecture is trained end-to-end purely from videos and supports
+				flexible conditioning on actions, language, and image goals. LPWM models stochastic particle dynamics via
+				a novel latent action module and achieves state-of-the-art results on diverse real-world and synthetic datasets.
+				Beyond stochastic video modeling, LPWM is readily applicable to decision-making,
+				including goal-conditioned imitation learning, as we demonstrate in the paper.
+            </p>
+        </section>
+
+        <section id="architecture">
+            <h2>Architecture</h2>
+            <div class="architecture-content">
+                <div class="placeholder">
+                    <h3>LPWM</h3>
+					<img src="./assets/arch_main_ltr.png" height="450"></img>
+                    <p>Latent Particle World Model architecture. Left: Input frames are encoded into particle sets by the `Encoder` and decoded back to images by the `Decoder`. 
+					The Context module then processes the particles to sample latent actions, which are combined with the particles in the `Dynamics` module to predict
+					next-step particle states. 
+					Right: The `Context` module models the per-particle latent action distribution. 
+					During training, we use the latent inverse dynamics head, while at inference, the latent policy is employed for sampling.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="results">
+            <h2>Results</h2>
+            
+            <div class="dataset-section" id="dataset1">
+                <div class="dataset-header">
+                    <div class="dataset-title-group">
+                        <h3 class="dataset-title">Sketchy</h3>
+                        <p class="dataset-description">Real-world robotic manipulation</p>
+                    </div>
+                </div>
+                
+                <div class="video-grid layout-asymmetric" id="dataset1-grid">
+                    <div class="video-item">
+                        <div class="video-placeholder"><img src="./assets/sketchy_particlegrid.gif" width="850"></img></div>
+                        <div class="video-caption">Particle grid: self-supervised object-centric decomposition</div>
+                    </div>
+                    <div class="video-item">
+                        <div class="video-placeholder"><img src="./assets/sketchy_0_comp_la.gif" width="400"></div>
+                        <div class="video-caption">Latent action-conditioned video prediction comparison</div>
+                    </div>
+                    <div class="video-item">
+                        <div class="video-placeholder"><img src="./assets/sketchy_2469_lpwm_gen_comp.gif" width="400"></div>
+                        <div class="video-caption">Stochastic video generation</div>
+                    </div>
+                </div>
+                
+                <div class="expandable-videos" id="dataset1-expand">
+                    <div class="video-grid layout-2col">
+                        <div class="video-item">
+                            <div class="video-placeholder"><img src="./assets/sketchy_65_action_comp.gif" width="400"></div>
+                            <div class="video-caption">Action-conditioned video prediction comparison</div>
+                        </div>
+                        <div class="video-item">
+                            <div class="video-placeholder"><img src="./assets/sketchy_2034_lpwm_gen_comp.gif" width="400"></div>
+                            <div class="video-caption">Stochastic video generation</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="expand-btn" onclick="toggleExpand('dataset1-expand', this)">
+                    Show More <span class="arrow">▼</span>
+                </button>
+                
+                <a href="https://sites.google.com/view/lpwm/sketchy" class="dataset-link">
+                    View All Videos
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                </a>
+            </div>
+
+            <div class="dataset-section" id="dataset2">
+                <div class="dataset-header">
+                    <div class="dataset-title-group">
+                        <h3 class="dataset-title">Bridge</h3>
+                        <p class="dataset-description">Language-conditioned real-world robotic manipulation</p>
+                    </div>
+                </div>
+                
+                <div class="video-grid layout-asymmetric" id="dataset2-grid">
+                    <div class="video-item">
+                        <div class="video-placeholder"><img src="./assets/bridge_1871_particlegrid.gif" width="850"></div>
+                        <div class="video-caption">Particle grid: self-supervised object-centric decomposition</div>
+                    </div>
+                    <div class="video-item">
+                        <div class="video-placeholder"><img src="./assets/bridge_313_lang_comp.gif" width="400"></div>
+                        <div class="video-caption">Language-conditioned video generation comparison with patch-based VAE (DVAE)</div>
+                    </div>
+                    <div class="video-item">
+                        <div class="video-placeholder"><img src="./assets/bridge_15_lpwm_gen_comp.gif" width="400"></div>
+                        <div class="video-caption">Stochastic language-conditioned video generation</div>
+                    </div>
+                </div>
+                
+                <div class="expandable-videos" id="dataset2-expand">
+                    <div class="video-grid layout-2col">
+                        <div class="video-item">
+                            <div class="video-placeholder"><img src="./assets/bridge_1871_lang_comp.gif" width="400"></div>
+                            <div class="video-caption">Language-conditioned video generation comparison with patch-based VAE (DVAE)</div>
+                        </div>
+                        <div class="video-item">
+                            <div class="video-placeholder"><img src="./assets/bridge_2069_lpwm_gen_comp.gif" width="400"></div>
+                            <div class="video-caption">Stochastic language-conditioned video generation</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="expand-btn" onclick="toggleExpand('dataset2-expand', this)">
+                    Show More <span class="arrow">▼</span>
+                </button>
+                
+                <a href="https://sites.google.com/view/lpwm/bridge" class="dataset-link">
+                    View All Videos
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                </a>
+            </div>
+
+            <div class="dataset-section" id="dataset3">
+                <div class="dataset-header">
+                    <div class="dataset-title-group">
+                        <h3 class="dataset-title">Mario</h3>
+                        <p class="dataset-description">Offline expert gameplay video of Mario</p>
+                    </div>
+                </div>
+                
+                <div class="video-grid layout-asymmetric" id="dataset3-grid">
+                    <div class="video-item">
+                        <div class="video-placeholder"><img src="./assets/mario_35_particlegrid.gif" width="850"></div>
+                        <div class="video-caption">Particle grid: self-supervised object-centric decomposition</div>
+                    </div>
+                    <div class="video-item">
+                        <div class="video-placeholder"><img src="./assets/mario_71_latentaction_comp.gif" width="400"></div>
+                        <div class="video-caption">Latent action-conditioned video prediction comparison</div>
+                    </div>
+                    <div class="video-item">
+                        <div class="video-placeholder"><img src="./assets/mario_86_lpwm_gen_comp.gif" width="400"></div>
+                        <div class="video-caption">Stochastic video generation</div>
+                    </div>
+                </div>
+                
+                <div class="expandable-videos" id="dataset3-expand">
+                    <div class="video-grid layout-2col">
+                        <div class="video-item">
+                            <div class="video-placeholder"><img src="./assets/mario_89_latentaction_comp.gif" width="400"></div>
+                            <div class="video-caption">Latent action-conditioned video prediction comparison</div>
+                        </div>
+                        <div class="video-item">
+                            <div class="video-placeholder"><img src="./assets/mario_35_lpwm_gen_comp.gif" width="400"></div>
+                            <div class="video-caption">Stochastic video generation</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="expand-btn" onclick="toggleExpand('dataset3-expand', this)">
+                    Show More <span class="arrow">▼</span>
+                </button>
+                
+                <a href="https://sites.google.com/view/lpwm/mario" class="dataset-link">
+                    View All Videos
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                </a>
+            </div>
+			
+			<div class="dataset-section" id="dataset4">
+                <div class="dataset-header">
+                    <div class="dataset-title-group">
+                        <h3 class="dataset-title">LanguageTable</h3>
+                        <p class="dataset-description">Language-conditioned real-world robotic manipulation</p>
+                    </div>
+                </div>
+                
+                <div class="video-grid layout-asymmetric" id="dataset4-grid">
+                    <div class="video-item">
+                        <div class="video-placeholder"><img src="./assets/langtable_476_particlegrid.gif" width="850"></div>
+                        <div class="video-caption">Particle grid: self-supervised object-centric decomposition</div>
+                    </div>
+                    <div class="video-item">
+                        <div class="video-placeholder"><img src="./assets/langtable_12_lang_comp.gif" width="400"></div>
+                        <div class="video-caption">Language-conditioned video generation comparison with patch-based VAE (DVAE)</div>
+                    </div>
+                    <div class="video-item">
+                        <div class="video-placeholder"><img src="./assets/langtable_476_lpwm_gen_comp.gif" width="400"></div>
+                        <div class="video-caption">Stochastic language-conditioned video generation</div>
+                    </div>
+                </div>
+                
+                <div class="expandable-videos" id="dataset4-expand">
+                    <div class="video-grid layout-2col">
+                        <div class="video-item">
+                            <div class="video-placeholder"><img src="./assets/langtable_6911_lang_comp.gif" width="400"></div>
+                            <div class="video-caption">Language-conditioned video generation comparison with patch-based VAE (DVAE)</div>
+                        </div>
+                        <div class="video-item">
+                            <div class="video-placeholder"><img src="./assets/langtable_218_lpwm_gen_comp.gif" width="400"></div>
+                            <div class="video-caption">Stochastic language-conditioned video generation</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="expand-btn" onclick="toggleExpand('dataset4-expand', this)">
+                    Show More <span class="arrow">▼</span>
+                </button>
+                
+                <a href="https://sites.google.com/view/lpwm/languagetable" class="dataset-link">
+                    View All Videos
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                </a>
+            </div>
+			
+			<div class="dataset-section" id="dataset5">
+                <div class="dataset-header">
+                    <div class="dataset-title-group">
+                        <h3 class="dataset-title">BAIR</h3>
+                        <p class="dataset-description">Real-world robotic manipulation</p>
+                    </div>
+                </div>
+                
+                <div class="video-grid layout-asymmetric" id="dataset5-grid">
+                    <div class="video-item">
+                        <div class="video-placeholder"><img src="./assets/bair_482_particlegrid.gif" width="850"></div>
+                        <div class="video-caption">Particle grid: self-supervised object-centric decomposition</div>
+                    </div>
+                    <div class="video-item">
+                        <div class="video-placeholder"><img src="./assets/bair_110_latentaction_comp.gif" width="400"></div>
+                        <div class="video-caption">Latent action-conditioned video prediction comparison</div>
+                    </div>
+                    <div class="video-item">
+                        <div class="video-placeholder"><img src="./assets/bair_570_lpwm_gen_comp.gif" width="400"></div>
+                        <div class="video-caption">Stochastic video generation</div>
+                    </div>
+                </div>
+                
+                <div class="expandable-videos" id="dataset5-expand">
+                    <div class="video-grid layout-2col">
+                        <div class="video-item">
+                            <div class="video-placeholder"><img src="./assets/bair_966_latentaction_comp.gif" width="400"></div>
+                            <div class="video-caption">Latent action-conditioned video prediction comparison</div>
+                        </div>
+                        <div class="video-item">
+                            <div class="video-placeholder"><img src="./assets/bair_719_lpwm_gen_comp.gif" width="400"></div>
+                            <div class="video-caption">Stochastic video generation</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="expand-btn" onclick="toggleExpand('dataset5-expand', this)">
+                    Show More <span class="arrow">▼</span>
+                </button>
+                
+                <a href="https://sites.google.com/view/lpwm/bair" class="dataset-link">
+                    View All Videos
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                </a>
+            </div>
+			
+			<div class="dataset-section" id="dataset6">
+                <div class="dataset-header">
+                    <div class="dataset-title-group">
+                        <h3 class="dataset-title">PandaPush - Imitation Learning</h3>
+                        <p class="dataset-description">Multi-view simulated image goal-conditioned manipulation</p>
+                    </div>
+                </div>
+                
+                <div class="video-grid layout-asymmetric" id="dataset6-grid">
+                    <div class="video-item">
+                        <div class="video-placeholder"><img src="./assets/panda_49_imagiexe_comp.gif" width="850"></div>
+                        <div class="video-caption">Close-loop imagination-execution (imagined latent actions are mapped to GT actions)</div>
+                    </div>
+                    <div class="video-item">
+                        <div class="video-placeholder"><img src="./assets/panda_65_goalcondmv_comp.gif" width="400"></div>
+                        <div class="video-caption">Image goal-conditioned stochastic generation</div>
+                    </div>
+                    <div class="video-item">
+                        <div class="video-placeholder"><img src="./assets/panda_86_goalcondmv_comp.gif" width="400"></div>
+                        <div class="video-caption">Image goal-conditioned stochastic generation</div>
+                    </div>
+                </div>
+                
+                <div class="expandable-videos" id="dataset6-expand">
+                    <div class="video-grid layout-2col">
+                        <div class="video-item">
+                            <div class="video-placeholder"><img src="./assets/panda_40_goalcondmv_comp.gif" width="400"></div>
+                            <div class="video-caption">Image goal-conditioned stochastic generation</div>
+                        </div>
+                        <div class="video-item">
+                            <div class="video-placeholder"><img src="./assets/panda_43_goalcondmv_comp.gif" width="400"></div>
+                            <div class="video-caption">Image goal-conditioned stochastic generation</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="expand-btn" onclick="toggleExpand('dataset6-expand', this)">
+                    Show More <span class="arrow">▼</span>
+                </button>
+                
+                <a href="https://sites.google.com/view/lpwm/pandapush" class="dataset-link">
+                    View All Videos
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                </a>
+            </div>
+			
+			<div class="dataset-section" id="dataset7">
+                <div class="dataset-header">
+                    <div class="dataset-title-group">
+                        <h3 class="dataset-title">OGBench - Imitation Learning</h3>
+                        <p class="dataset-description">Simulated image goal-conditioned manipulation</p>
+                    </div>
+                </div>
+                
+                <div class="video-grid layout-asymmetric" id="dataset7-grid">
+                    <div class="video-item">
+                        <div class="video-placeholder"><img src="./assets/ogbench_44_imagiexe_comp.gif" width="750"></div>
+                        <div class="video-caption">Close-loop imagination-execution (imagined latent actions are mapped to GT actions)</div>
+                    </div>
+                    <div class="video-item">
+                        <div class="video-placeholder"><img src="./assets/ogbench_78_imgcondgen_comp.gif" width="400"></div>
+                        <div class="video-caption">Image goal-conditioned stochastic generation</div>
+                    </div>
+                    <div class="video-item">
+                        <div class="video-placeholder"><img src="./assets/ogbench_23_imgcondgen_comp.gif" width="400"></div>
+                        <div class="video-caption">Image goal-conditioned stochastic generation</div>
+                    </div>
+                </div>
+                
+                <div class="expandable-videos" id="dataset7-expand">
+                    <div class="video-grid layout-2col">
+                        <div class="video-item">
+                            <div class="video-placeholder"><img src="./assets/ogbench_24_imgcondgen_comp.gif" width="400"></div>
+                            <div class="video-caption">Image goal-conditioned stochastic generation</div>
+                        </div>
+                        <div class="video-item">
+                            <div class="video-placeholder"><img src="./assets/ogbench_44_imgcondgen_comp.gif" width="400"></div>
+                            <div class="video-caption">Image goal-conditioned stochastic generation</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="expand-btn" onclick="toggleExpand('dataset7-expand', this)">
+                    Show More <span class="arrow">▼</span>
+                </button>
+                
+                <a href="https://sites.google.com/view/lpwm/ogbench-scene" class="dataset-link">
+                    View All Videos
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                </a>
+            </div>
+			
+
+            <!-- Related Work Section -->
+            <div class="related-work-section" id="related">
+                <h2 class="related-work-title">Enter the Particleverse</h2>
+                <p class="related-work-subtitle">Explore other works using deep latent particles (DLP) representation</p>
+                
+                <div class="carousel-container">
+                    <div class="carousel-track">
+                        <a href="https://taldatech.github.io/deep-latent-particles-web/" class="work-card">
+                            <div class="work-card-image"><img src="https://raw.githubusercontent.com/taldatech/deep-latent-particles-web/main/assets/clevrer_manip_1.gif" width="250"></div>
+                            <div class="work-card-content">
+                                <div class="work-card-title">Unsupervised Image Representation Learning with Deep Latent Particles</div>
+                                <div class="work-card-authors">Daniel et al.</div>
+                                <div class="work-card-venue">ICML 2022</div>
+                            </div>
+                        </a>
+                        
+                        <a href="https://taldatech.github.io/ddlp-web/" class="work-card">
+                            <div class="work-card-image"><img src="https://taldatech.github.io/ddlp-web/assets/images/obj3d3.gif" width="250"></div>
+                            <div class="work-card-content">
+                                <div class="work-card-title">DDLP: Unsupervised Object-Centric Video Prediction with Deep Dynamic Latent Particles</div>
+                                <div class="work-card-authors">Daniel et al.</div>
+                                <div class="work-card-venue">TMLR 2024</div>
+                            </div>
+                        </a>
+                        
+                        <a href="https://sites.google.com/view/entity-centric-rl" class="work-card">
+                            <div class="work-card-image"><img src="https://danhrmti.github.io/files/publications/ecrl_clip.gif" width="250"></div>
+                            <div class="work-card-content">
+                                <div class="work-card-title">Entity-Centric Reinforcement Learning for Object Manipulation from Pixels</div>
+                                <div class="work-card-authors">Haramati et al.</div>
+                                <div class="work-card-venue">ICLR 2024</div>
+                            </div>
+                        </a>
+                        
+                        <a href="https://sites.google.com/view/ec-diffuser/" class="work-card">
+                            <div class="work-card-image"><img src="https://danhrmti.github.io/files/publications/ecdiffuser_clip.gif" width="250"></div>
+                            <div class="work-card-content">
+                                <div class="work-card-title">EC-Diffuser: Multi-object Manipulation via Entity-centric Behavior Generation</div>
+                                <div class="work-card-authors">Qi et al.</div>
+                                <div class="work-card-venue">ICLR 2025</div>
+                            </div>
+                        </a>
+                        
+                        <a href="https://sites.google.com/view/hecrl" class="work-card">
+                            <div class="work-card-image"><img src="https://danhrmti.github.io/files/publications/hecrl_clip.gif" width="250"></div>
+                            <div class="work-card-content">
+                                <div class="work-card-title">Hierarchical Entity-centric Reinforcement Learning with Factored Subgoal Diffusion</div>
+                                <div class="work-card-authors">Haramati et al.</div>
+                                <div class="work-card-venue">ICLR 2026</div>
+                            </div>
+                        </a>
+                        <!---
+                        <a href="#" class="work-card">
+                            <div class="work-card-image">Thumbnail</div>
+                            <div class="work-card-content">
+                                <div class="work-card-title">Contrastive Learning of Structured World Models</div>
+                                <div class="work-card-authors">Kipf et al.</div>
+                                <div class="work-card-venue">ICLR 2020</div>
+                            </div>
+                        </a>
+						---!>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <footer>
+            <p>© 2026 Tal Daniel</p>
+        </footer>
+    </div>
+
+    <!-- Video Modal/Lightbox -->
+    <div class="video-modal" id="videoModal">
+        <div class="video-modal-content">
+            <div class="video-modal-close" onclick="closeVideoModal()">×</div>
+            <img id="modalImage" src="" alt="">
+            <div class="video-modal-caption" id="modalCaption"></div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('particles-canvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const particles = [];
+        const particleCount = 100;
+        const mouse = { x: canvas.width / 2, y: canvas.height / 2, radius: 180 };
+        let time = 0;
+
+        function getColor(particle, mouseDistance) {
+            const normalizedDist = Math.min(mouseDistance / 300, 1);
+            
+            if (normalizedDist < 0.4) {
+                const t = normalizedDist / 0.4;
+                const r = Math.floor(236 - (236 - 167) * t);
+                const g = Math.floor(72 + (139 - 72) * t);
+                const b = Math.floor(153 + (250 - 153) * t);
+                return `rgba(${r}, ${g}, ${b}, 0.7)`;
+            } else {
+                const t = (normalizedDist - 0.4) / 0.6;
+                const r = Math.floor(167 - (167 - 96) * t);
+                const g = Math.floor(139 + (165 - 139) * t);
+                const b = 250;
+                return `rgba(${r}, ${g}, ${b}, 0.6)`;
+            }
+        }
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.baseX = this.x;
+                this.baseY = this.y;
+                this.vx = 0;
+                this.vy = 0;
+                this.radius = Math.random() * 2.5 + 1;
+                this.angle = Math.random() * Math.PI * 2;
+                this.angleVel = (Math.random() - 0.5) * 0.02;
+                this.orbitRadius = Math.random() * 40 + 20;
+            }
+
+            update() {
+                this.angle += this.angleVel;
+                const targetX = this.baseX + Math.cos(this.angle) * this.orbitRadius;
+                const targetY = this.baseY + Math.sin(this.angle) * this.orbitRadius;
+
+                if (mouse.x != null && mouse.y != null) {
+                    const dx = mouse.x - this.x;
+                    const dy = mouse.y - this.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < mouse.radius) {
+                        const force = (1 - distance / mouse.radius) * 0.5;
+                        this.vx += (dx / distance) * force;
+                        this.vy += (dy / distance) * force;
+                    }
+                }
+
+                this.vx += (targetX - this.x) * 0.01;
+                this.vy += (targetY - this.y) * 0.01;
+
+                this.x += this.vx;
+                this.y += this.vy;
+
+                this.vx *= 0.92;
+                this.vy *= 0.92;
+
+                this.baseX += Math.sin(time * 0.001 + this.angle) * 0.1;
+                this.baseY += Math.cos(time * 0.001 + this.angle) * 0.1;
+
+                if (this.baseX < -50) this.baseX = canvas.width + 50;
+                if (this.baseX > canvas.width + 50) this.baseX = -50;
+                if (this.baseY < -50) this.baseY = canvas.height + 50;
+                if (this.baseY > canvas.height + 50) this.baseY = -50;
+            }
+
+            draw() {
+                const dx = this.x - mouse.x;
+                const dy = this.y - mouse.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = getColor(this, distance);
+                ctx.fill();
+                
+                if (distance < mouse.radius) {
+                    const glowStrength = 1 - (distance / mouse.radius);
+                    ctx.shadowBlur = 10 * glowStrength;
+                    ctx.shadowColor = getColor(this, distance);
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                }
+            }
+        }
+
+        for (let i = 0; i < particleCount; i++) {
+            particles.push(new Particle());
+        }
+
+        function connectParticles() {
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < 120) {
+                        const mdx1 = particles[i].x - mouse.x;
+                        const mdy1 = particles[i].y - mouse.y;
+                        const mdist1 = Math.sqrt(mdx1 * mdx1 + mdy1 * mdy1);
+                        
+                        const mdx2 = particles[j].x - mouse.x;
+                        const mdy2 = particles[j].y - mouse.y;
+                        const mdist2 = Math.sqrt(mdx2 * mdx2 + mdy2 * mdy2);
+                        
+                        const avgMouseDist = (mdist1 + mdist2) / 2;
+                        const normalizedDist = Math.min(avgMouseDist / 300, 1);
+                        
+                        let r, g, b;
+                        if (normalizedDist < 0.4) {
+                            const t = normalizedDist / 0.4;
+                            r = Math.floor(236 - (236 - 167) * t);
+                            g = Math.floor(72 + (139 - 72) * t);
+                            b = Math.floor(153 + (250 - 153) * t);
+                        } else {
+                            const t = (normalizedDist - 0.4) / 0.6;
+                            r = Math.floor(167 - (167 - 96) * t);
+                            g = Math.floor(139 + (165 - 139) * t);
+                            b = 250;
+                        }
+                        
+                        ctx.beginPath();
+                        ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${0.2 * (1 - distance / 120)})`;
+                        ctx.lineWidth = 1;
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            time++;
+
+            particles.forEach(particle => {
+                particle.update();
+                particle.draw();
+            });
+
+            connectParticles();
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.x;
+            mouse.y = e.y;
+        });
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        // Sticky header on scroll
+        window.addEventListener('scroll', () => {
+            const header = document.getElementById('sticky-header');
+            const sideNav = document.getElementById('side-nav');
+            
+            if (window.scrollY > window.innerHeight * 0.8) {
+                header.classList.add('visible');
+                sideNav.classList.add('visible');
+            } else {
+                header.classList.remove('visible');
+                sideNav.classList.remove('visible');
+            }
+            
+            // Update active side nav item
+            updateActiveSideNav();
+        });
+
+        // Smooth scrolling
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // Toggle expand/collapse for video sections
+        function toggleExpand(sectionId, button) {
+            const section = document.getElementById(sectionId);
+            section.classList.toggle('expanded');
+            button.classList.toggle('expanded');
+            
+            if (button.classList.contains('expanded')) {
+                button.innerHTML = 'Show Less <span class="arrow">▼</span>';
+            } else {
+                button.innerHTML = 'Show More <span class="arrow">▼</span>';
+            }
+        }
+
+        // Scroll to dataset
+        function scrollToDataset(datasetId) {
+            const element = document.getElementById(datasetId);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        // Update active side nav item based on scroll position
+        function updateActiveSideNav() {
+            const datasets = ['dataset1', 'dataset2', 'dataset3', 'dataset4', 'dataset5', 'dataset6', 'dataset7'];
+            const navItems = document.querySelectorAll('.side-nav-item');
+            
+            let activeIndex = 0;
+            datasets.forEach((id, index) => {
+                const element = document.getElementById(id);
+                if (element) {
+                    const rect = element.getBoundingClientRect();
+                    if (rect.top <= window.innerHeight / 2) {
+                        activeIndex = index;
+                    }
+                }
+            });
+            
+            navItems.forEach((item, index) => {
+                if (index === activeIndex) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+        }
+
+        // Video Modal Functions
+        function openVideoModal(imageSrc, caption) {
+            const modal = document.getElementById('videoModal');
+            const modalImage = document.getElementById('modalImage');
+            const modalCaption = document.getElementById('modalCaption');
+            
+            modalImage.src = imageSrc;
+            modalCaption.textContent = caption;
+            modal.classList.add('active');
+            
+            // Prevent body scroll when modal is open
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeVideoModal() {
+            const modal = document.getElementById('videoModal');
+            modal.classList.remove('active');
+            
+            // Restore body scroll
+            document.body.style.overflow = 'auto';
+        }
+
+        // Close modal when clicking outside the image
+        document.getElementById('videoModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeVideoModal();
+            }
+        });
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeVideoModal();
+            }
+        });
+
+        // Make all video placeholders clickable
+        document.addEventListener('DOMContentLoaded', function() {
+            const videoPlaceholders = document.querySelectorAll('.video-placeholder');
+            
+            videoPlaceholders.forEach(placeholder => {
+                placeholder.addEventListener('click', function() {
+                    const img = this.querySelector('img');
+                    const caption = this.nextElementSibling?.textContent || '';
+                    
+                    if (img) {
+                        openVideoModal(img.src, caption);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
