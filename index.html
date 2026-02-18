@@ -419,6 +419,32 @@
             color: #808080;
         }
 
+        .placeholder img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 2rem auto;
+        }
+
+        .placeholder h3 {
+            margin-bottom: 1rem;
+        }
+
+        .placeholder p {
+            margin-top: 1rem;
+            text-align: left;
+            color: #909090;
+            line-height: 1.6;
+        }
+
+        .placeholder p {
+            color: #d0d0d0;
+            font-size: 1.05rem;
+            line-height: 1.6;
+            font-weight: 400;
+            margin-top: 1rem;
+        }
+
         .dataset-section {
             background: rgba(96, 165, 250, 0.03);
             border: 1px solid rgba(96, 165, 250, 0.2);
@@ -506,13 +532,32 @@
             justify-content: center;
             color: #808080;
             font-size: 1.2rem;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .video-item:hover .video-placeholder {
+            transform: scale(1.02);
+        }
+
+        .video-placeholder img {
+            display: block;
+            width: 100%;
+            max-width: 100%;
+            height: auto;
+            transition: opacity 0.3s ease;
+        }
+
+        .video-item:hover .video-placeholder img {
+            opacity: 0.9;
         }
 
         .video-caption {
             padding: 1rem;
-            color: #b0b0b0;
-            font-size: 0.95rem;
-            line-height: 1.5;
+            color: #d0d0d0;
+            font-size: 1.05rem;
+            line-height: 1.6;
+            font-weight: 400;
         }
 
         .expandable-videos {
@@ -615,14 +660,55 @@
 
         .carousel-container {
             position: relative;
-            overflow: hidden;
+            overflow: visible;
             padding: 1rem 0;
+            margin: 0 60px;
+        }
+
+        .carousel-nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 50px;
+            height: 50px;
+            background: rgba(167, 139, 250, 0.3);
+            border: 2px solid rgba(167, 139, 250, 0.6);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 10;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(167, 139, 250, 0.3);
+        }
+
+        .carousel-nav-btn:hover {
+            background: rgba(167, 139, 250, 0.5);
+            border-color: rgba(167, 139, 250, 0.8);
+            transform: translateY(-50%) scale(1.15);
+            box-shadow: 0 6px 20px rgba(167, 139, 250, 0.5);
+        }
+
+        .carousel-nav-btn.left {
+            left: -60px;
+        }
+
+        .carousel-nav-btn.right {
+            right: -60px;
+        }
+
+        .carousel-nav-btn svg {
+            width: 24px;
+            height: 24px;
+            fill: #a78bfa;
         }
 
         .carousel-track {
             display: flex;
             gap: 1.5rem;
             overflow-x: auto;
+            overflow-y: visible;
             scroll-behavior: smooth;
             scrollbar-width: thin;
             scrollbar-color: rgba(167, 139, 250, 0.3) rgba(167, 139, 250, 0.05);
@@ -678,6 +764,13 @@
             justify-content: center;
             color: #808080;
             font-size: 0.9rem;
+            overflow: hidden;
+        }
+
+        .work-card-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
         }
 
         .work-card-content {
@@ -787,26 +880,6 @@
             font-size: 1rem;
         }
 
-        .video-placeholder {
-            cursor: pointer;
-            transition: transform 0.3s ease;
-        }
-
-        .video-item:hover .video-placeholder {
-            transform: scale(1.02);
-        }
-
-        .video-placeholder img {
-            display: block;
-            width: 100%;
-            height: auto;
-            transition: opacity 0.3s ease;
-        }
-
-        .video-item:hover .video-placeholder img {
-            opacity: 0.9;
-        }
-
         footer {
             text-align: center;
             padding: 3rem 2rem;
@@ -816,20 +889,53 @@
 
         @media (max-width: 768px) {
             h1 {
-                font-size: 2.5rem;
+                font-size: 2rem;
+                line-height: 1.2;
             }
 
             .subtitle {
-                font-size: 1.2rem;
+                font-size: 1rem;
+            }
+
+            .venue {
+                font-size: 1rem;
+            }
+
+            .authors {
+                font-size: 1rem;
+                gap: 1rem;
+            }
+
+            .affiliations {
+                font-size: 0.85rem;
+                gap: 1rem;
+            }
+
+            section {
+                padding: 4rem 1rem;
+            }
+
+            h2 {
+                font-size: 2rem;
             }
 
             .video-grid.layout-2col,
             .video-grid.layout-asymmetric {
                 grid-template-columns: 1fr;
+                gap: 1rem;
             }
 
             .video-grid.layout-asymmetric .video-item:first-child {
                 grid-column: 1;
+            }
+
+            .video-grid.layout-asymmetric .video-item:first-child .video-placeholder {
+                aspect-ratio: 16 / 9;
+            }
+
+            .video-caption {
+                font-size: 0.95rem;
+                padding: 0.8rem;
             }
 
             .side-nav {
@@ -849,6 +955,28 @@
             .icon-btn-circle svg {
                 width: 24px;
                 height: 24px;
+            }
+
+            .carousel-nav-btn {
+                display: none;
+            }
+
+            .carousel-container {
+                margin: 0;
+            }
+
+            .dataset-section {
+                padding: 1.5rem;
+            }
+
+            .video-modal-content {
+                max-width: 95vw;
+            }
+
+            .video-modal-close {
+                top: -50px;
+                width: 40px;
+                height: 40px;
             }
         }
     </style>
@@ -963,10 +1091,10 @@
             <h2>Architecture</h2>
             <div class="architecture-content">
                 <div class="placeholder">
-                    <h3>LPWM</h3>
-					<img src="./assets/arch_main_ltr.png" height="450"></img>
-                    <p>Latent Particle World Model architecture. Left: Input frames are encoded into particle sets by the `Encoder` and decoded back to images by the `Decoder`. 
-					The Context module then processes the particles to sample latent actions, which are combined with the particles in the `Dynamics` module to predict
+                    <h3>Latent Particle World Model (LPWM)</h3>
+					<img src="./assets/arch_main_ltr.png"></img>
+                    <p>Left: Input frames are encoded into particle sets by the `Encoder` and decoded back to images by the `Decoder`. 
+					The `Context` module then processes the particles to sample latent actions, which are combined with the particles in the `Dynamics` module to predict
 					next-step particle states. 
 					Right: The `Context` module models the per-particle latent action distribution. 
 					During training, we use the latent inverse dynamics head, while at inference, the latent policy is employed for sampling.</p>
@@ -987,15 +1115,15 @@
                 
                 <div class="video-grid layout-asymmetric" id="dataset1-grid">
                     <div class="video-item">
-                        <div class="video-placeholder"><img src="./assets/sketchy_particlegrid.gif" width="850"></img></div>
+                        <div class="video-placeholder"><img src="./assets/sketchy_particlegrid.gif"></img></div>
                         <div class="video-caption">Particle grid: self-supervised object-centric decomposition</div>
                     </div>
                     <div class="video-item">
-                        <div class="video-placeholder"><img src="./assets/sketchy_0_comp_la.gif" width="400"></div>
+                        <div class="video-placeholder"><img src="./assets/sketchy_0_comp_la.gif"></div>
                         <div class="video-caption">Latent action-conditioned video prediction comparison</div>
                     </div>
                     <div class="video-item">
-                        <div class="video-placeholder"><img src="./assets/sketchy_2469_lpwm_gen_comp.gif" width="400"></div>
+                        <div class="video-placeholder"><img src="./assets/sketchy_2469_lpwm_gen_comp.gif"></div>
                         <div class="video-caption">Stochastic video generation</div>
                     </div>
                 </div>
@@ -1003,11 +1131,11 @@
                 <div class="expandable-videos" id="dataset1-expand">
                     <div class="video-grid layout-2col">
                         <div class="video-item">
-                            <div class="video-placeholder"><img src="./assets/sketchy_65_action_comp.gif" width="400"></div>
+                            <div class="video-placeholder"><img src="./assets/sketchy_65_action_comp.gif"></div>
                             <div class="video-caption">Action-conditioned video prediction comparison</div>
                         </div>
                         <div class="video-item">
-                            <div class="video-placeholder"><img src="./assets/sketchy_2034_lpwm_gen_comp.gif" width="400"></div>
+                            <div class="video-placeholder"><img src="./assets/sketchy_2034_lpwm_gen_comp.gif"></div>
                             <div class="video-caption">Stochastic video generation</div>
                         </div>
                     </div>
@@ -1035,15 +1163,15 @@
                 
                 <div class="video-grid layout-asymmetric" id="dataset2-grid">
                     <div class="video-item">
-                        <div class="video-placeholder"><img src="./assets/bridge_1871_particlegrid.gif" width="850"></div>
+                        <div class="video-placeholder"><img src="./assets/bridge_1871_particlegrid.gif"></div>
                         <div class="video-caption">Particle grid: self-supervised object-centric decomposition</div>
                     </div>
                     <div class="video-item">
-                        <div class="video-placeholder"><img src="./assets/bridge_313_lang_comp.gif" width="400"></div>
+                        <div class="video-placeholder"><img src="./assets/bridge_313_lang_comp.gif"></div>
                         <div class="video-caption">Language-conditioned video generation comparison with patch-based VAE (DVAE)</div>
                     </div>
                     <div class="video-item">
-                        <div class="video-placeholder"><img src="./assets/bridge_15_lpwm_gen_comp.gif" width="400"></div>
+                        <div class="video-placeholder"><img src="./assets/bridge_15_lpwm_gen_comp.gif"></div>
                         <div class="video-caption">Stochastic language-conditioned video generation</div>
                     </div>
                 </div>
@@ -1051,11 +1179,11 @@
                 <div class="expandable-videos" id="dataset2-expand">
                     <div class="video-grid layout-2col">
                         <div class="video-item">
-                            <div class="video-placeholder"><img src="./assets/bridge_1871_lang_comp.gif" width="400"></div>
+                            <div class="video-placeholder"><img src="./assets/bridge_1871_lang_comp.gif"></div>
                             <div class="video-caption">Language-conditioned video generation comparison with patch-based VAE (DVAE)</div>
                         </div>
                         <div class="video-item">
-                            <div class="video-placeholder"><img src="./assets/bridge_2069_lpwm_gen_comp.gif" width="400"></div>
+                            <div class="video-placeholder"><img src="./assets/bridge_2069_lpwm_gen_comp.gif"></div>
                             <div class="video-caption">Stochastic language-conditioned video generation</div>
                         </div>
                     </div>
@@ -1083,15 +1211,15 @@
                 
                 <div class="video-grid layout-asymmetric" id="dataset3-grid">
                     <div class="video-item">
-                        <div class="video-placeholder"><img src="./assets/mario_35_particlegrid.gif" width="850"></div>
+                        <div class="video-placeholder"><img src="./assets/mario_35_particlegrid.gif"></div>
                         <div class="video-caption">Particle grid: self-supervised object-centric decomposition</div>
                     </div>
                     <div class="video-item">
-                        <div class="video-placeholder"><img src="./assets/mario_71_latentaction_comp.gif" width="400"></div>
+                        <div class="video-placeholder"><img src="./assets/mario_71_latentaction_comp.gif"></div>
                         <div class="video-caption">Latent action-conditioned video prediction comparison</div>
                     </div>
                     <div class="video-item">
-                        <div class="video-placeholder"><img src="./assets/mario_86_lpwm_gen_comp.gif" width="400"></div>
+                        <div class="video-placeholder"><img src="./assets/mario_86_lpwm_gen_comp.gif"></div>
                         <div class="video-caption">Stochastic video generation</div>
                     </div>
                 </div>
@@ -1099,11 +1227,11 @@
                 <div class="expandable-videos" id="dataset3-expand">
                     <div class="video-grid layout-2col">
                         <div class="video-item">
-                            <div class="video-placeholder"><img src="./assets/mario_89_latentaction_comp.gif" width="400"></div>
+                            <div class="video-placeholder"><img src="./assets/mario_89_latentaction_comp.gif"></div>
                             <div class="video-caption">Latent action-conditioned video prediction comparison</div>
                         </div>
                         <div class="video-item">
-                            <div class="video-placeholder"><img src="./assets/mario_35_lpwm_gen_comp.gif" width="400"></div>
+                            <div class="video-placeholder"><img src="./assets/mario_35_lpwm_gen_comp.gif"></div>
                             <div class="video-caption">Stochastic video generation</div>
                         </div>
                     </div>
@@ -1131,15 +1259,15 @@
                 
                 <div class="video-grid layout-asymmetric" id="dataset4-grid">
                     <div class="video-item">
-                        <div class="video-placeholder"><img src="./assets/langtable_476_particlegrid.gif" width="850"></div>
+                        <div class="video-placeholder"><img src="./assets/langtable_476_particlegrid.gif"></div>
                         <div class="video-caption">Particle grid: self-supervised object-centric decomposition</div>
                     </div>
                     <div class="video-item">
-                        <div class="video-placeholder"><img src="./assets/langtable_12_lang_comp.gif" width="400"></div>
+                        <div class="video-placeholder"><img src="./assets/langtable_12_lang_comp.gif"></div>
                         <div class="video-caption">Language-conditioned video generation comparison with patch-based VAE (DVAE)</div>
                     </div>
                     <div class="video-item">
-                        <div class="video-placeholder"><img src="./assets/langtable_476_lpwm_gen_comp.gif" width="400"></div>
+                        <div class="video-placeholder"><img src="./assets/langtable_476_lpwm_gen_comp.gif"></div>
                         <div class="video-caption">Stochastic language-conditioned video generation</div>
                     </div>
                 </div>
@@ -1147,11 +1275,11 @@
                 <div class="expandable-videos" id="dataset4-expand">
                     <div class="video-grid layout-2col">
                         <div class="video-item">
-                            <div class="video-placeholder"><img src="./assets/langtable_6911_lang_comp.gif" width="400"></div>
+                            <div class="video-placeholder"><img src="./assets/langtable_6911_lang_comp.gif"></div>
                             <div class="video-caption">Language-conditioned video generation comparison with patch-based VAE (DVAE)</div>
                         </div>
                         <div class="video-item">
-                            <div class="video-placeholder"><img src="./assets/langtable_218_lpwm_gen_comp.gif" width="400"></div>
+                            <div class="video-placeholder"><img src="./assets/langtable_218_lpwm_gen_comp.gif"></div>
                             <div class="video-caption">Stochastic language-conditioned video generation</div>
                         </div>
                     </div>
@@ -1179,15 +1307,15 @@
                 
                 <div class="video-grid layout-asymmetric" id="dataset5-grid">
                     <div class="video-item">
-                        <div class="video-placeholder"><img src="./assets/bair_482_particlegrid.gif" width="850"></div>
+                        <div class="video-placeholder"><img src="./assets/bair_482_particlegrid.gif"></div>
                         <div class="video-caption">Particle grid: self-supervised object-centric decomposition</div>
                     </div>
                     <div class="video-item">
-                        <div class="video-placeholder"><img src="./assets/bair_110_latentaction_comp.gif" width="400"></div>
+                        <div class="video-placeholder"><img src="./assets/bair_110_latentaction_comp.gif"></div>
                         <div class="video-caption">Latent action-conditioned video prediction comparison</div>
                     </div>
                     <div class="video-item">
-                        <div class="video-placeholder"><img src="./assets/bair_570_lpwm_gen_comp.gif" width="400"></div>
+                        <div class="video-placeholder"><img src="./assets/bair_570_lpwm_gen_comp.gif"></div>
                         <div class="video-caption">Stochastic video generation</div>
                     </div>
                 </div>
@@ -1195,11 +1323,11 @@
                 <div class="expandable-videos" id="dataset5-expand">
                     <div class="video-grid layout-2col">
                         <div class="video-item">
-                            <div class="video-placeholder"><img src="./assets/bair_966_latentaction_comp.gif" width="400"></div>
+                            <div class="video-placeholder"><img src="./assets/bair_966_latentaction_comp.gif"></div>
                             <div class="video-caption">Latent action-conditioned video prediction comparison</div>
                         </div>
                         <div class="video-item">
-                            <div class="video-placeholder"><img src="./assets/bair_719_lpwm_gen_comp.gif" width="400"></div>
+                            <div class="video-placeholder"><img src="./assets/bair_719_lpwm_gen_comp.gif"></div>
                             <div class="video-caption">Stochastic video generation</div>
                         </div>
                     </div>
@@ -1227,15 +1355,15 @@
                 
                 <div class="video-grid layout-asymmetric" id="dataset6-grid">
                     <div class="video-item">
-                        <div class="video-placeholder"><img src="./assets/panda_49_imagiexe_comp.gif" width="850"></div>
+                        <div class="video-placeholder"><img src="./assets/panda_49_imagiexe_comp.gif"></div>
                         <div class="video-caption">Close-loop imagination-execution (imagined latent actions are mapped to GT actions)</div>
                     </div>
                     <div class="video-item">
-                        <div class="video-placeholder"><img src="./assets/panda_65_goalcondmv_comp.gif" width="400"></div>
+                        <div class="video-placeholder"><img src="./assets/panda_65_goalcondmv_comp.gif"></div>
                         <div class="video-caption">Image goal-conditioned stochastic generation</div>
                     </div>
                     <div class="video-item">
-                        <div class="video-placeholder"><img src="./assets/panda_86_goalcondmv_comp.gif" width="400"></div>
+                        <div class="video-placeholder"><img src="./assets/panda_86_goalcondmv_comp.gif"></div>
                         <div class="video-caption">Image goal-conditioned stochastic generation</div>
                     </div>
                 </div>
@@ -1243,11 +1371,11 @@
                 <div class="expandable-videos" id="dataset6-expand">
                     <div class="video-grid layout-2col">
                         <div class="video-item">
-                            <div class="video-placeholder"><img src="./assets/panda_40_goalcondmv_comp.gif" width="400"></div>
+                            <div class="video-placeholder"><img src="./assets/panda_40_goalcondmv_comp.gif"></div>
                             <div class="video-caption">Image goal-conditioned stochastic generation</div>
                         </div>
                         <div class="video-item">
-                            <div class="video-placeholder"><img src="./assets/panda_43_goalcondmv_comp.gif" width="400"></div>
+                            <div class="video-placeholder"><img src="./assets/panda_43_goalcondmv_comp.gif"></div>
                             <div class="video-caption">Image goal-conditioned stochastic generation</div>
                         </div>
                     </div>
@@ -1275,15 +1403,15 @@
                 
                 <div class="video-grid layout-asymmetric" id="dataset7-grid">
                     <div class="video-item">
-                        <div class="video-placeholder"><img src="./assets/ogbench_44_imagiexe_comp.gif" width="750"></div>
+                        <div class="video-placeholder"><img src="./assets/ogbench_44_imagiexe_comp.gif"></div>
                         <div class="video-caption">Close-loop imagination-execution (imagined latent actions are mapped to GT actions)</div>
                     </div>
                     <div class="video-item">
-                        <div class="video-placeholder"><img src="./assets/ogbench_78_imgcondgen_comp.gif" width="400"></div>
+                        <div class="video-placeholder"><img src="./assets/ogbench_78_imgcondgen_comp.gif"></div>
                         <div class="video-caption">Image goal-conditioned stochastic generation</div>
                     </div>
                     <div class="video-item">
-                        <div class="video-placeholder"><img src="./assets/ogbench_23_imgcondgen_comp.gif" width="400"></div>
+                        <div class="video-placeholder"><img src="./assets/ogbench_23_imgcondgen_comp.gif"></div>
                         <div class="video-caption">Image goal-conditioned stochastic generation</div>
                     </div>
                 </div>
@@ -1291,11 +1419,11 @@
                 <div class="expandable-videos" id="dataset7-expand">
                     <div class="video-grid layout-2col">
                         <div class="video-item">
-                            <div class="video-placeholder"><img src="./assets/ogbench_24_imgcondgen_comp.gif" width="400"></div>
+                            <div class="video-placeholder"><img src="./assets/ogbench_24_imgcondgen_comp.gif"></div>
                             <div class="video-caption">Image goal-conditioned stochastic generation</div>
                         </div>
                         <div class="video-item">
-                            <div class="video-placeholder"><img src="./assets/ogbench_44_imgcondgen_comp.gif" width="400"></div>
+                            <div class="video-placeholder"><img src="./assets/ogbench_44_imgcondgen_comp.gif"></div>
                             <div class="video-caption">Image goal-conditioned stochastic generation</div>
                         </div>
                     </div>
@@ -1320,9 +1448,19 @@
                 <p class="related-work-subtitle">Explore other works using deep latent particles (DLP) representation</p>
                 
                 <div class="carousel-container">
-                    <div class="carousel-track">
+                    <button class="carousel-nav-btn left" onclick="scrollCarousel('left')">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M15 18l-6-6 6-6"/>
+                        </svg>
+                    </button>
+                    <button class="carousel-nav-btn right" onclick="scrollCarousel('right')">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9 18l6-6-6-6"/>
+                        </svg>
+                    </button>
+                    <div class="carousel-track" id="carouselTrack">
                         <a href="https://taldatech.github.io/deep-latent-particles-web/" class="work-card">
-                            <div class="work-card-image"><img src="https://raw.githubusercontent.com/taldatech/deep-latent-particles-web/main/assets/clevrer_manip_1.gif" width="250"></div>
+                            <div class="work-card-image"><img src="https://raw.githubusercontent.com/taldatech/deep-latent-particles-web/main/assets/clevrer_manip_1.gif"></div>
                             <div class="work-card-content">
                                 <div class="work-card-title">Unsupervised Image Representation Learning with Deep Latent Particles</div>
                                 <div class="work-card-authors">Daniel et al.</div>
@@ -1331,7 +1469,7 @@
                         </a>
                         
                         <a href="https://taldatech.github.io/ddlp-web/" class="work-card">
-                            <div class="work-card-image"><img src="https://taldatech.github.io/ddlp-web/assets/images/obj3d3.gif" width="250"></div>
+                            <div class="work-card-image"><img src="https://taldatech.github.io/ddlp-web/assets/images/obj3d3.gif"></div>
                             <div class="work-card-content">
                                 <div class="work-card-title">DDLP: Unsupervised Object-Centric Video Prediction with Deep Dynamic Latent Particles</div>
                                 <div class="work-card-authors">Daniel et al.</div>
@@ -1340,7 +1478,7 @@
                         </a>
                         
                         <a href="https://sites.google.com/view/entity-centric-rl" class="work-card">
-                            <div class="work-card-image"><img src="https://danhrmti.github.io/files/publications/ecrl_clip.gif" width="250"></div>
+                            <div class="work-card-image"><img src="https://danhrmti.github.io/files/publications/ecrl_clip.gif"></div>
                             <div class="work-card-content">
                                 <div class="work-card-title">Entity-Centric Reinforcement Learning for Object Manipulation from Pixels</div>
                                 <div class="work-card-authors">Haramati et al.</div>
@@ -1349,7 +1487,7 @@
                         </a>
                         
                         <a href="https://sites.google.com/view/ec-diffuser/" class="work-card">
-                            <div class="work-card-image"><img src="https://danhrmti.github.io/files/publications/ecdiffuser_clip.gif" width="250"></div>
+                            <div class="work-card-image"><img src="https://danhrmti.github.io/files/publications/ecdiffuser_clip.gif"></div>
                             <div class="work-card-content">
                                 <div class="work-card-title">EC-Diffuser: Multi-object Manipulation via Entity-centric Behavior Generation</div>
                                 <div class="work-card-authors">Qi et al.</div>
@@ -1358,7 +1496,7 @@
                         </a>
                         
                         <a href="https://sites.google.com/view/hecrl" class="work-card">
-                            <div class="work-card-image"><img src="https://danhrmti.github.io/files/publications/hecrl_clip.gif" width="250"></div>
+                            <div class="work-card-image"><img src="https://danhrmti.github.io/files/publications/hecrl_clip.gif"></div>
                             <div class="work-card-content">
                                 <div class="work-card-title">Hierarchical Entity-centric Reinforcement Learning with Factored Subgoal Diffusion</div>
                                 <div class="work-card-authors">Haramati et al.</div>
@@ -1692,6 +1830,18 @@
                 });
             });
         });
+
+        // Carousel scroll function
+        function scrollCarousel(direction) {
+            const track = document.getElementById('carouselTrack');
+            const scrollAmount = 300; // Amount to scroll in pixels
+            
+            if (direction === 'left') {
+                track.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+            } else {
+                track.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+            }
+        }
     </script>
 </body>
 </html>
