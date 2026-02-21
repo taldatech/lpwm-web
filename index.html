@@ -237,6 +237,117 @@
             font-size: 0.85em;
         }
 
+        /* BibTeX Citation Section */
+        .citation-section {
+            margin-top: 2rem;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .citation-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.7rem 1.5rem;
+            background: rgba(96, 165, 250, 0.1);
+            border: 2px solid rgba(96, 165, 250, 0.3);
+            color: #60a5fa;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .citation-toggle:hover {
+            background: rgba(96, 165, 250, 0.2);
+            border-color: rgba(96, 165, 250, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .citation-toggle svg {
+            width: 18px;
+            height: 18px;
+            fill: #60a5fa;
+            transition: transform 0.3s ease;
+        }
+
+        .citation-toggle.active svg {
+            transform: rotate(180deg);
+        }
+
+        .citation-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease;
+            margin-top: 0;
+        }
+
+        .citation-content.expanded {
+            max-height: 500px;
+            margin-top: 1rem;
+        }
+
+        .citation-box {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(96, 165, 250, 0.3);
+            border-radius: 8px;
+            padding: 1.5rem;
+            position: relative;
+        }
+
+        .citation-box pre {
+            margin: 0;
+            color: #d0d0d0;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            text-align: left;
+        }
+
+        .copy-bibtex-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            padding: 0.5rem 1rem;
+            background: rgba(96, 165, 250, 0.2);
+            border: 1px solid rgba(96, 165, 250, 0.4);
+            color: #60a5fa;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .copy-bibtex-btn:hover {
+            background: rgba(96, 165, 250, 0.3);
+            border-color: rgba(96, 165, 250, 0.6);
+        }
+
+        .copy-bibtex-btn svg {
+            width: 14px;
+            height: 14px;
+            fill: #60a5fa;
+        }
+
+        .copy-bibtex-btn.copied {
+            background: rgba(34, 197, 94, 0.2);
+            border-color: rgba(34, 197, 94, 0.4);
+            color: #22c55e;
+        }
+
+        .copy-bibtex-btn.copied svg {
+            fill: #22c55e;
+        }
+
         /* Circular Icon Buttons */
         .links {
             display: flex;
@@ -978,6 +1089,26 @@
                 width: 40px;
                 height: 40px;
             }
+
+            .citation-section {
+                margin-top: 1.5rem;
+                padding: 0 1rem;
+            }
+
+            .citation-box {
+                padding: 1rem;
+            }
+
+            .citation-box pre {
+                font-size: 0.75rem;
+            }
+
+            .copy-bibtex-btn {
+                position: static;
+                width: 100%;
+                margin-top: 1rem;
+                justify-content: center;
+            }
         }
     </style>
 </head>
@@ -1027,6 +1158,35 @@
                 <div class="affiliation"><sup>3</sup>Brown University</div>
                 <div class="affiliation"><sup>4</sup>Technion</div>
                 <div class="affiliation"><sup>5</sup>Lambda</div>
+            </div>
+            
+            <!-- BibTeX Citation Section -->
+            <div class="citation-section">
+                <button class="citation-toggle" onclick="toggleCitation()" id="citationToggle">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M7 10l5 5 5-5z"/>
+                    </svg>
+                    Cite this work
+                </button>
+                <div class="citation-content" id="citationContent">
+                    <div class="citation-box">
+                        <button class="copy-bibtex-btn" onclick="copyBibtex()" id="copyBtn">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                            </svg>
+                            Copy
+                        </button>
+                        <pre id="bibtexCode">@inproceedings{
+daniel2026latent,
+title={Latent Particle World Models: Self-supervised Object-centric Stochastic Dynamics Modeling},
+author={Tal Daniel and Carl Qi and Dan Haramati and Amir Zadeh and Chuan Li and Aviv Tamar and Deepak Pathak and David Held},
+booktitle={The Fourteenth International Conference on Learning Representations},
+year={2026},
+url={https://openreview.net/forum?id=lTaPtGiUUc}
+}</pre>
+                    </div>
+                </div>
             </div>
             
             <div class="links">
@@ -1841,6 +2001,46 @@
             } else {
                 track.scrollBy({ left: scrollAmount, behavior: 'smooth' });
             }
+        }
+
+        // BibTeX citation toggle
+        function toggleCitation() {
+            const content = document.getElementById('citationContent');
+            const toggle = document.getElementById('citationToggle');
+            
+            content.classList.toggle('expanded');
+            toggle.classList.toggle('active');
+        }
+
+        // Copy BibTeX to clipboard
+        function copyBibtex() {
+            const bibtexCode = document.getElementById('bibtexCode').textContent;
+            const copyBtn = document.getElementById('copyBtn');
+            
+            navigator.clipboard.writeText(bibtexCode).then(function() {
+                // Change button text and style to show success
+                copyBtn.innerHTML = `
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M20 6L9 17l-5-5"/>
+                    </svg>
+                    Copied!
+                `;
+                copyBtn.classList.add('copied');
+                
+                // Reset after 2 seconds
+                setTimeout(function() {
+                    copyBtn.innerHTML = `
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                        Copy
+                    `;
+                    copyBtn.classList.remove('copied');
+                }, 2000);
+            }, function(err) {
+                console.error('Failed to copy text: ', err);
+            });
         }
     </script>
 </body>
